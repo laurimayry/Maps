@@ -9,11 +9,15 @@ export default function App() {
 
   const [address, setAddress] = useState('')
   const [coordinates, setCoordinates] = useState(null);
+  const [restaurants, setRestaurants] = useState([]);
 
   const apiKey = '65de52db8f41f792491013daxa1d575';
+  const apiKeyGoogle = 'AIzaSyBD4pUkRctbeG-1sYhEGit_ceJCo6ihx7o';
+
 
   const handleSearch = async () => {
     try {
+      //GEOCODE
       const response = await fetch(`https://geocode.maps.co/search?q=${address}&api_key=${apiKey}`);
       const data = await response.json();
 
@@ -24,14 +28,27 @@ export default function App() {
         const latitudeValue = parseFloat(lat);
         const longitudeValue = parseFloat(lon);
         setCoordinates({ latitude: latitudeValue, longitude: longitudeValue });
+
+
+        
+        // Hae ravintolat läheltä annettuja koordinaatteja
+        //GOOGLE; TARVITAAN SIIS GOOGLELLE OMA API KEY
+        const restaurantsResponse = await fetch(
+          `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitudeValue},${longitudeValue}&radius=1000&type=restaurant&key=${apiKeyGoogle}`
+        );
+        const restaurantsData = await restaurantsResponse.json();
+        console.log(restaurantsData)
+        setRestaurants(restaurantsData.results);
+
       } else {
         console.error('Ei tuloksia');
       }
     } catch (error) {
       console.error('Virhe osoitteen haussa:', error);
     }
-  };
 
+    
+  };
 
   return (
     <View style={styles.container}>
@@ -52,6 +69,20 @@ export default function App() {
             }}
             title="Hakutulos"
           />
+
+           {/* Ravintolat */}
+           {restaurants.map((restaurant) => (
+            <Marker
+              key={restaurant.place_id}
+              coordinate={{
+                latitude: restaurant.geometry.location.lat,
+                longitude: restaurant.geometry.location.lng,
+              }}
+              title={restaurant.name}
+              description={restaurant.vicinity}
+            />
+          ))}
+
         </MapView>
       )}
 
@@ -61,7 +92,7 @@ export default function App() {
       value={address}
       onChangeText={(text) => setAddress(text)}
     />
-    <Button title="Hae koordinaatit" onPress={handleSearch} />
+    <Button title="Hae" onPress={handleSearch} />
   </View>
   );
 }
