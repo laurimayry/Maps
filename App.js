@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, Button } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-
+import * as Location from 'expo-location';
 
 
 export default function App() {
@@ -10,10 +10,26 @@ export default function App() {
   const [address, setAddress] = useState('')
   const [coordinates, setCoordinates] = useState(null);
   const [restaurants, setRestaurants] = useState([]);
+  const [errorMsg, setErrorMsg] = useState(null);
+
 
   const apiKey = '65de52db8f41f792491013daxa1d575';
   const apiKeyGoogle = 'AIzaSyBD4pUkRctbeG-1sYhEGit_ceJCo6ihx7o';
 
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      setCoordinates({ latitude, longitude });
+    })();
+  }, []);
 
   const handleSearch = async () => {
     try {
